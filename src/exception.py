@@ -6,7 +6,7 @@ Allow calling code to identify and handle specific project failures.
 
 import sys
 
-from src.logger import logging
+from src.logger import logging  # noqa: F401
 
 
 def error_message_detail(error, error_detail: sys):
