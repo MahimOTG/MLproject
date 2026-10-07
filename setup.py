@@ -1,7 +1,7 @@
 #i can build my ML Algorithms as package using pypi
 
 from setuptools import setup, find_packages
-from typing import List
+from typing import List  # noqa: F401
 
 def get_requirements(file_path: str) -> list[str]:
     # Opens the file for reading using UTF-8 encoding.
