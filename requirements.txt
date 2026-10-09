@@ -8,3 +8,4 @@ xgboost
 ipykernel
 setuptools
 dill
+flask
