@@ -11,11 +11,13 @@ import numpy as np  # noqa: F401
 import pandas as pd  # noqa: F401
 from sklearn.model_selection import train_test_split  # noqa: F401
 
+from src.components.data_transformation import (
+    DataTransformation,  # noqa: F401
+    DataTransformationConfig,  # noqa: F401
+)
+from src.components.model_trainer import ModelTrainer
 from src.exception import CustomException  # noqa: F401
 from src.logger import logging  # noqa: F401
-from src.components.data_transformation import DataTransformation  # noqa: F401
-from src.components.data_transformation import DataTransformationConfig  # noqa: F401
-from src.components.model_trainer import ModelTrainer
 
 
 @dataclass

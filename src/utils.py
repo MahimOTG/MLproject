@@ -7,11 +7,20 @@ Reduce duplicated code and keep the main workflow files focused on their tasks.
 
 import os
 import sys
+
+import dill  # noqa: F401
 import numpy as np  # noqa: F401
 import pandas as pd
+from sklearn.metrics import (  # noqa: F401
+    mean_absolute_error,
+    mean_squared_error,
+    r2_score,
+)
+from sklearn.model_selection import GridSearchCV, KFold  # noqa: F401
+
 from src.exception import CustomException
-import dill  # noqa: F401
-from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error  # noqa: F401
+from src.logger import logging
+
 
 def save_object(file_path, obj):
     try:
@@ -21,16 +30,36 @@ def save_object(file_path, obj):
     except Exception as e:
         raise CustomException(e, sys)
     
-def evaluate_models(X, y_train, X_test, y_test, models):
-    try:
-        report = {}
-        for i in range(len(models)):
-            model = list(models.values())[i]
-            model.fit(X, y_train)
-            y_test_pred = model.predict(X_test)
-            test_model_score = r2_score(y_test, y_test_pred)
-            report[list(models.keys())[i]] = test_model_score
-            
-        return report
-    except Exception as e:
-        raise CustomException(e, sys)
+def evaluate_models(X, y_train, models, params):
+    report = {}
+    cv = KFold(n_splits=3, shuffle=True, random_state=42)
+
+    for name, model in models.items():
+        print(f"Tuning {name}...", flush=True)
+
+        search = GridSearchCV(
+            estimator=model,
+            param_grid=params.get(name, {}),
+            scoring="r2",
+            cv=cv,
+            refit=True,
+            error_score="raise",
+            verbose=2
+        )
+
+        search.fit(X, y_train)
+
+        # Keep the fitted winning model for prediction and saving.
+        models[name] = search.best_estimator_
+        report[name] = search.best_score_
+
+        logging.info(
+            "%s | Best parameters: %s | CV R²: %.4f",
+            name,
+            search.best_params_,
+            search.best_score_
+        )
+
+    return report
+
+

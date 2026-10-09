@@ -66,28 +66,71 @@ class ModelTrainer:
                 "Lasso Regression": Lasso(),
                 "KNeighbors Regressor": KNeighborsRegressor()
             }
-            model_report = evaluate_models(X=X_train,
-                                           y_train=y_train,
-                                           X_test=X_test,
-                                           y_test=y_test,
-                                           models=models)
-            #to get the best model score from the dictionary
-            best_model_score = max(sorted(model_report.values()))
-            #to get the best model name from the dictionary
-            best_model_name = list(model_report.keys())[
-                list(model_report.values()).index(best_model_score)
-            ]
+            params={
+                "Decision Tree":{
+                    'criterion':['squared_error',  'absolute_error', 'poisson'],
+                    'splitter':['best','random'],
+                    'max_features':['sqrt','log2'],
+                },
+                "Random Forest":{
+                    'n_estimators':[8,16,32,64,128,256],
+                    'criterion':['squared_error', 'absolute_error', 'poisson'],
+                    'max_features':['sqrt','log2',None],
+                },
+                "Gradient Boosting":{
+                    'loss':['squared_error', 'huber', 'absolute_error', 'quantile'],
+                    'learning_rate':[0.05, 0.1],
+                    'subsample':[0.6,0.7,0.75,0.8,0.85,0.9],
+                    
+                    'max_features':['sqrt','log2',None],
+                    'n_estimators':[50, 100],
+                    'max_depth':[2, 3]
+                },
+                "Linear Regression":{},
+                "XGBRegressor":{
+                    'learning_rate':[.1,.01,.05,.001],
+                    'n_estimators':[8,16,32,64,128,256]
+                },
+                "CatBoosting Regressor":{
+                    'depth':[6,8,10],
+                    'learning_rate':[.1,.01,.05,.001],
+                    'iterations':[30,50,100]
+                },
+                "AdaBoost Regressor":{
+                    'learning_rate':[.1,.01,0.5,.001],
+                    'n_estimators':[8,16,32,64,128,256]
+                },
+            }
+            model_report = evaluate_models(
+                                            X=X_train,
+                                            y_train=y_train,
+                                            models=models,
+                                            params=params
+                                            )
+
+            best_model_name = max(model_report, key=model_report.get)
+            best_model_score = model_report[best_model_name]
             best_model = models[best_model_name]
-            if best_model_score<0.6:
-                raise CustomException("No best model found",sys)
-            logging.info(f"Best found model on both training and testing dataset is {best_model_name} with r2 score: {best_model_score}")
+
+            if best_model_score < 0.6:
+                    raise ValueError("No model reached the minimum CV R² score of 0.6")
+
+            logging.info(
+                "Best model: %s | CV R²: %.4f",
+                 best_model_name,
+                 best_model_score
+            )
+
+            predicted = best_model.predict(X_test)
+            r2_square = r2_score(y_test, predicted)
 
             save_object(
                 file_path=self.model_trainer_config.trained_model_file_path,
-                obj=best_model
+                obj=best_model,
             )
-            predictted=best_model.predict(X_test)
-            r2_square = r2_score(y_test, predictted)  # noqa: F841
+
+            logging.info("Saved model. Test R²: %.4f", r2_square)
+
             return r2_square
         except Exception as e:
             raise CustomException(e,sys)
