@@ -13,6 +13,8 @@ from sklearn.model_selection import train_test_split  # noqa: F401
 
 from src.exception import CustomException  # noqa: F401
 from src.logger import logging  # noqa: F401
+from src.components.data_transformation import DataTransformation  # noqa: F401
+from src.components.data_transformation import DataTransformationConfig  # noqa: F401
 
 
 @dataclass
@@ -55,4 +57,7 @@ class DataIngestion:
               raise CustomException(e,sys)
 if __name__=="__main__":
     obj=DataIngestion()
-    obj.initiate_data_ingestion()         
+    train_data,test_data=obj.initiate_data_ingestion()        
+
+    data_transformation=DataTransformation()
+    data_transformation.initiate_data_transformation(train_data,test_data)
